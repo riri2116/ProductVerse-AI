@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # Database Service
+  postgres:
+    image: postgres:15-alpine
+    container_name: productverse-db
+    restart: always
+    environment:
+      POSTGRES_DB: productverse
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespass123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Node Express Sockets API Server
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: productverse-server
+    restart: always
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - DATABASE_URL=postgresql://postgres:postgrespass123@postgres:5432/productverse?schema=public
+      - JWT_SECRET=productverse-super-secret-key-2026
+    depends_on:
+      - postgres
+
+  # React Frontend client application
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: productverse-client
+    restart: always
+    ports:
+      - "3000:3000"
+    depends_on:
+      - server
+
+volumes:
+  postgres_data:
